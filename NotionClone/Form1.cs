@@ -40,6 +40,7 @@ namespace NotionClone
 
         string DataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Notion Clone");
         string CurrentPath;
+        bool Saving = false;
 
         public Form1()
         {
@@ -75,79 +76,135 @@ namespace NotionClone
         private void PreLoadNotes()
         {
             LoadNotes();
-            LoadNote(CurrentPath);
+            if (!string.IsNullOrEmpty(CurrentPath))
+            {
+                LoadNote(CurrentPath);
+            }
         }
 
         private void LoadNotes()
         {
             NotePanel.Controls.Clear();
 
-            if (!Directory.Exists(DataPath)) { return; }
-
-            foreach (var file in Directory.GetFiles(DataPath))
+            if (!Directory.Exists(DataPath))
             {
-                string Json = File.ReadAllText(file);
-                var note = JsonSerializer.Deserialize<Dictionary<string, string>>(Json);
+                Directory.CreateDirectory(DataPath);
+                return;
+            }
 
-                if (note.ContainsKey("title"))
+            var files = Directory.GetFiles(DataPath, "*.json");
+
+            if (string.IsNullOrEmpty(CurrentPath) && files.Length > 0)
+            {
+                CurrentPath = files[0];
+            }
+
+            foreach (var file in files)
+            {
+                try
                 {
-                    NoteSidebarElement NSE = new NoteSidebarElement(note["title"], file);
-                    NSE.FileDoubleClicked += SidebarNoteClicked;
-                    NotePanel.Controls.Add(NSE);
+                    string Json = File.ReadAllText(file);
+                    var note = JsonSerializer.Deserialize<Dictionary<string, string>>(Json);
+
+                    if (note.ContainsKey("title"))
+                    {
+                        NoteSidebarElement NSE = new NoteSidebarElement(note["title"], file);
+                        NSE.FileDoubleClicked += SidebarNoteClicked;
+                        NotePanel.Controls.Add(NSE);
+                    }
                 }
-                CurrentPath = file;
+
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error loading note: {ex.Message}");
+                }
             }
         }
 
         private async void SidebarNoteClicked(object sender, string directory)
         {
-            SaveNote(TitleBox.Text, ContentBox.Text, CurrentPath);
-            LoadNotes();
+            if (!string.IsNullOrEmpty(CurrentPath))
+            {
+                SaveNote(TitleBox.Text, ContentBox.Text, CurrentPath);
+            }
+
             CurrentPath = directory;
-            TitleBox.Clear();
-            ContentBox.Clear();
             LoadNote(directory);
+            LoadNotes();
         }
 
         private void SaveNote(string title, string content, string path)
-        { 
-            var Note = new
-            {
-                title = title,
-                content = content
-            };
+        {
+            if (Saving) return; 
+            Saving = true;
 
-            Random random = new Random();
-            string FileName;
-
-            if (File.Exists(path))
+            try
             {
-                File.Delete(path);
-                FileName = CurrentPath;
+                if (!Directory.Exists(DataPath))
+                {
+                    Directory.CreateDirectory(DataPath);
+                }
+
+                var Note = new
+                {
+                    title = title,
+                    content = content
+                };
+
+                string FilePath;
+
+                if (!string.IsNullOrEmpty(path) && File.Exists(path))
+                {
+                    FilePath = path;
+                }
+
+                else
+                {
+                    int fileNumber = 1;
+                    do //Thank you claude for this do thing
+                    {
+                        FilePath = System.IO.Path.Combine(DataPath, $"{fileNumber}.json");
+                        fileNumber++;
+                    } while (File.Exists(FilePath));
+
+                    CurrentPath = FilePath;
+                }
+
+                File.WriteAllText(FilePath, JsonSerializer.Serialize(Note, new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                }));
+                Saving = false;
             }
 
-            else
+            catch (Exception ex)
             {
-                FileName = Directory.GetFiles(DataPath).Length + 1 + ".json"; //Random file name
+                MessageBox.Show($"Error saving note: {ex.Message}");
             }
-
-            string FilePath = System.IO.Path.Combine(DataPath, FileName);
-
-            File.WriteAllText(FilePath, JsonSerializer.Serialize(Note, new JsonSerializerOptions
-            {
-                WriteIndented = true
-            }));
-
-            //Thank you stackoverflow.
         }
 
         private void LoadNote(string path)
         {
-            string Json = File.ReadAllText(path);
-            var note = JsonSerializer.Deserialize<Dictionary<string, string>>(Json);
+            if (!File.Exists(path)) return;
 
-            TitleBox.Text = note["title"];
-            ContentBox.Text = note["content"];
+            try
+            {
+                string Json = File.ReadAllText(path);
+                var note = JsonSerializer.Deserialize<Dictionary<string, string>>(Json);
+
+                if (note != null)
+                {
+                    TitleBox.Text = note["title"];
+                    ContentBox.Text = note["content"];
+                }
+            }
+
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading note: {ex.Message}");
+                TitleBox.Clear();
+                ContentBox.Clear();
+            }
         }
 
         private void TopPanel_MouseDown(object sender, MouseEventArgs e)
@@ -170,7 +227,6 @@ namespace NotionClone
             {
                 this.WindowState = FormWindowState.Normal;
             }
-
             else
             {
                 this.WindowState = FormWindowState.Maximized;
@@ -179,13 +235,19 @@ namespace NotionClone
 
         private void ButtonClose_Click(object sender, EventArgs e)
         {
+            if (!string.IsNullOrEmpty(CurrentPath))
+            {
+                SaveNote(TitleBox.Text, ContentBox.Text, CurrentPath);
+            }
             this.Close();
         }
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            SaveNote(TitleBox.Text, ContentBox.Text, CurrentPath);
-            LoadNotes();
+            if (!string.IsNullOrEmpty(CurrentPath) && !Saving)
+            {
+                SaveNote(TitleBox.Text, ContentBox.Text, CurrentPath);
+            }
         }
     }
 }
