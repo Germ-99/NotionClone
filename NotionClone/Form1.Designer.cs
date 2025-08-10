@@ -38,6 +38,9 @@
             this.TitleBox = new System.Windows.Forms.RichTextBox();
             this.ContentBox = new System.Windows.Forms.RichTextBox();
             this.TopPanel = new System.Windows.Forms.Panel();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.TrashButton = new FontAwesome.Sharp.IconPictureBox();
+            this.MoreButton = new FontAwesome.Sharp.IconPictureBox();
             this.ButtonMin = new FontAwesome.Sharp.IconPictureBox();
             this.ButtonMax = new FontAwesome.Sharp.IconPictureBox();
             this.ButtonClose = new FontAwesome.Sharp.IconPictureBox();
@@ -45,6 +48,8 @@
             this.SidePanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.ButtonNewNote)).BeginInit();
             this.TopPanel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.TrashButton)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.MoreButton)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ButtonMin)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ButtonMax)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ButtonClose)).BeginInit();
@@ -120,6 +125,7 @@
             this.TitleBox.TabIndex = 1;
             this.TitleBox.Text = "Title";
             this.TitleBox.Click += new System.EventHandler(this.TitleBox_Click);
+            this.TitleBox.TextChanged += new System.EventHandler(this.TitleBox_TextChanged);
             // 
             // ContentBox
             // 
@@ -133,9 +139,13 @@
             this.ContentBox.Size = new System.Drawing.Size(687, 534);
             this.ContentBox.TabIndex = 2;
             this.ContentBox.Text = resources.GetString("ContentBox.Text");
+            this.ContentBox.TextChanged += new System.EventHandler(this.ContentBox_TextChanged);
             // 
             // TopPanel
             // 
+            this.TopPanel.Controls.Add(this.panel1);
+            this.TopPanel.Controls.Add(this.TrashButton);
+            this.TopPanel.Controls.Add(this.MoreButton);
             this.TopPanel.Controls.Add(this.ButtonMin);
             this.TopPanel.Controls.Add(this.ButtonMax);
             this.TopPanel.Controls.Add(this.ButtonClose);
@@ -144,6 +154,46 @@
             this.TopPanel.Name = "TopPanel";
             this.TopPanel.Size = new System.Drawing.Size(1080, 35);
             this.TopPanel.TabIndex = 6;
+            // 
+            // panel1
+            // 
+            this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(155)))), ((int)(((byte)(155)))), ((int)(((byte)(155)))));
+            this.panel1.Location = new System.Drawing.Point(36, 8);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(1, 21);
+            this.panel1.TabIndex = 7;
+            this.panel1.Visible = false;
+            // 
+            // TrashButton
+            // 
+            this.TrashButton.BackColor = System.Drawing.Color.Transparent;
+            this.TrashButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(155)))), ((int)(((byte)(155)))), ((int)(((byte)(155)))));
+            this.TrashButton.IconChar = FontAwesome.Sharp.IconChar.TrashAlt;
+            this.TrashButton.IconColor = System.Drawing.Color.FromArgb(((int)(((byte)(155)))), ((int)(((byte)(155)))), ((int)(((byte)(155)))));
+            this.TrashButton.IconFont = FontAwesome.Sharp.IconFont.Regular;
+            this.TrashButton.IconSize = 27;
+            this.TrashButton.Location = new System.Drawing.Point(41, 5);
+            this.TrashButton.Name = "TrashButton";
+            this.TrashButton.Size = new System.Drawing.Size(27, 27);
+            this.TrashButton.TabIndex = 20;
+            this.TrashButton.TabStop = false;
+            this.TrashButton.Visible = false;
+            this.TrashButton.Click += new System.EventHandler(this.TrashButton_Click);
+            // 
+            // MoreButton
+            // 
+            this.MoreButton.BackColor = System.Drawing.Color.Transparent;
+            this.MoreButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(155)))), ((int)(((byte)(155)))), ((int)(((byte)(155)))));
+            this.MoreButton.IconChar = FontAwesome.Sharp.IconChar.Ellipsis;
+            this.MoreButton.IconColor = System.Drawing.Color.FromArgb(((int)(((byte)(155)))), ((int)(((byte)(155)))), ((int)(((byte)(155)))));
+            this.MoreButton.IconFont = FontAwesome.Sharp.IconFont.Solid;
+            this.MoreButton.IconSize = 27;
+            this.MoreButton.Location = new System.Drawing.Point(6, 5);
+            this.MoreButton.Name = "MoreButton";
+            this.MoreButton.Size = new System.Drawing.Size(27, 27);
+            this.MoreButton.TabIndex = 19;
+            this.MoreButton.TabStop = false;
+            this.MoreButton.Click += new System.EventHandler(this.MoreButton_Click);
             // 
             // ButtonMin
             // 
@@ -219,11 +269,12 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Notion Clone";
             this.Load += new System.EventHandler(this.Form1_Load);
-            this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.Form1_MouseMove);
             this.SidePanel.ResumeLayout(false);
             this.SidePanel.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.ButtonNewNote)).EndInit();
             this.TopPanel.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.TrashButton)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.MoreButton)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.ButtonMin)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.ButtonMax)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.ButtonClose)).EndInit();
@@ -245,6 +296,9 @@
         private System.Windows.Forms.Timer timer1;
         private FontAwesome.Sharp.IconPictureBox ButtonNewNote;
         private System.Windows.Forms.Label label2;
+        private FontAwesome.Sharp.IconPictureBox MoreButton;
+        private System.Windows.Forms.Panel panel1;
+        private FontAwesome.Sharp.IconPictureBox TrashButton;
     }
 }
 
