@@ -12,7 +12,6 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Controls.Primitives;
 using System.Windows.Forms;
-using System.Windows.Shapes;
 
 namespace NotionClone
 {
@@ -247,7 +246,36 @@ namespace NotionClone
             if (!string.IsNullOrEmpty(CurrentPath) && !Saving)
             {
                 SaveNote(TitleBox.Text, ContentBox.Text, CurrentPath);
+                LoadNotes();
             }
+        }
+
+        private void ButtonNewNote_Click(object sender, EventArgs e)
+        {
+            TitleBox.Text = "New Note";
+            ContentBox.Clear();
+            TitleBox.ForeColor = Color.FromArgb(155, 155, 155);
+
+            int fileNumber = 1;
+            do //Thank you claude for this do thing
+            {
+                CurrentPath = System.IO.Path.Combine(DataPath, $"{fileNumber}.json");
+                fileNumber++;
+                Console.WriteLine(fileNumber);
+            } while (File.Exists(CurrentPath));
+
+            LoadNotes();
+        }
+
+        private void TitleBox_Click(object sender, EventArgs e)
+        {
+            TitleBox.Clear();
+            TitleBox.ForeColor = Color.FromArgb(212, 212, 212);
+        }
+
+        private void Form1_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
+        {
+
         }
     }
 }
