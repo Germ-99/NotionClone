@@ -124,8 +124,7 @@
             this.TitleBox.Size = new System.Drawing.Size(687, 66);
             this.TitleBox.TabIndex = 1;
             this.TitleBox.Text = "Title";
-            this.TitleBox.Click += new System.EventHandler(this.TitleBox_Click);
-            this.TitleBox.TextChanged += new System.EventHandler(this.TitleBox_TextChanged);
+            this.TitleBox.Click += new System.EventHandler(this.TitleBox_Click_1);
             // 
             // ContentBox
             // 
@@ -139,7 +138,6 @@
             this.ContentBox.Size = new System.Drawing.Size(687, 534);
             this.ContentBox.TabIndex = 2;
             this.ContentBox.Text = resources.GetString("ContentBox.Text");
-            this.ContentBox.TextChanged += new System.EventHandler(this.ContentBox_TextChanged);
             // 
             // TopPanel
             // 
@@ -248,7 +246,7 @@
             // 
             // timer1
             // 
-            this.timer1.Interval = 5000;
+            this.timer1.Interval = 10000;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
             // Form1

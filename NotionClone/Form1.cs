@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.Json;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace NotionClone
@@ -37,7 +33,6 @@ namespace NotionClone
         string DataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Notion Clone");
         string CurrentPath;
         bool Saving = false;
-        bool ChangesMade = true;
 
         Timer mouseCheckTimer;
         bool isInside = false;
@@ -55,7 +50,7 @@ namespace NotionClone
             mouseCheckTimer.Start();
         }
 
-        private void MouseCheckTimer_Tick(object sender, EventArgs e) //Thank you GPT-5
+        private void MouseCheckTimer_Tick(object sender, EventArgs e)
         {
             Point mousePos = PointToClient(Cursor.Position);
 
@@ -89,11 +84,12 @@ namespace NotionClone
                 DwmSetWindowAttribute(control.Handle, DwmWindowAttribute.DWMWA_USE_IMMERSIVE_DARK_MODE, ref trueValue, Marshal.SizeOf(typeof(int)));
                 DwmSetWindowAttribute(control.Handle, DwmWindowAttribute.DWMWA_MICA_EFFECT, ref trueValue, Marshal.SizeOf(typeof(int)));
             };
+
             if (parent == this) Theme(this);
             foreach (Control control in parent.Controls)
             {
                 Theme(control);
-                if (control.Controls.Count != 0)
+                if (control.Controls.Count > 0)
                     ThemeAllControls(control);
             }
         }
@@ -115,8 +111,6 @@ namespace NotionClone
 
         private void LoadNotes()
         {
-            if (!ChangesMade) return;
-
             NotePanel.Controls.Clear();
 
             if (!Directory.Exists(DataPath))
@@ -155,7 +149,7 @@ namespace NotionClone
             }
         }
 
-        private async void SidebarNoteClicked(object sender, string directory)
+        private void SidebarNoteClicked(object sender, string directory)
         {
             if (!string.IsNullOrEmpty(CurrentPath))
             {
@@ -170,7 +164,6 @@ namespace NotionClone
         private void SaveNote(string title, string content, string path)
         {
             if (Saving) return;
-            if (!ChangesMade) return;
             Saving = true;
 
             try
@@ -205,17 +198,17 @@ namespace NotionClone
                     CurrentPath = FilePath;
                 }
 
-                File.WriteAllText(FilePath, JsonSerializer.Serialize(Note, new JsonSerializerOptions
-                {
-                    WriteIndented = true
-                }));
-                Saving = false;
-                ChangesMade = false;
+                File.WriteAllText(FilePath, JsonSerializer.Serialize(Note, new JsonSerializerOptions { WriteIndented = true }));
             }
 
             catch (Exception ex)
             {
                 MessageBox.Show($"Error saving note: {ex.Message}");
+            }
+
+            finally
+            {
+                Saving = false;
             }
         }
 
@@ -232,6 +225,7 @@ namespace NotionClone
                 {
                     TitleBox.Text = note["title"];
                     ContentBox.Text = note["content"];
+                    CurrentPath = path;
                 }
             }
 
@@ -240,6 +234,7 @@ namespace NotionClone
                 MessageBox.Show($"Error loading note: {ex.Message}");
                 TitleBox.Clear();
                 ContentBox.Clear();
+                CurrentPath = null;
             }
         }
 
@@ -254,20 +249,12 @@ namespace NotionClone
 
         private void ButtonMin_Click(object sender, EventArgs e)
         {
-            this.WindowState = FormWindowState.Minimized;
+            WindowState = FormWindowState.Minimized;
         }
 
         private void ButtonMax_Click(object sender, EventArgs e)
         {
-            if (this.WindowState == FormWindowState.Maximized)
-            {
-                this.WindowState = FormWindowState.Normal;
-            }
-            
-            else
-            {
-                this.WindowState = FormWindowState.Maximized;
-            }
+            WindowState = (WindowState == FormWindowState.Maximized) ? FormWindowState.Normal : FormWindowState.Maximized;
         }
 
         private void ButtonClose_Click(object sender, EventArgs e)
@@ -295,17 +282,20 @@ namespace NotionClone
             TitleBox.ForeColor = Color.FromArgb(155, 155, 155);
 
             int fileNumber = 1;
+            string newNotePath;
+
             do
             {
-                CurrentPath = Path.Combine(DataPath, $"{fileNumber}.json");
+                newNotePath = Path.Combine(DataPath, $"{fileNumber}.json");
                 fileNumber++;
-            } while (File.Exists(CurrentPath));
+            } while (File.Exists(newNotePath));
 
-            ChangesMade = true;
-            LoadNotes();
+            CurrentPath = newNotePath;
+
+            SaveNote(TitleBox.Text, ContentBox.Text, CurrentPath);
         }
 
-        private void TitleBox_Click(object sender, EventArgs e)
+        private void TitleBox_Click_1(object sender, EventArgs e)
         {
             TitleBox.Clear();
             TitleBox.ForeColor = Color.FromArgb(212, 212, 212);
@@ -313,44 +303,23 @@ namespace NotionClone
 
         private void MoreButton_Click(object sender, EventArgs e)
         {
-            if (panel1.Visible == false)
-            {
-                panel1.Visible = true;
-                TrashButton.Visible = true;
-            }
-
-            else
-            {
-                panel1.Visible = false;
-                TrashButton.Visible = false;
-            }
+            panel1.Visible = !panel1.Visible;
+            TrashButton.Visible = panel1.Visible;
         }
 
         private void TrashButton_Click(object sender, EventArgs e)
         {
-            if (File.Exists(CurrentPath))
+            if (!string.IsNullOrEmpty(CurrentPath) && File.Exists(CurrentPath))
             {
                 File.Delete(CurrentPath);
             }
 
-            Console.WriteLine(CurrentPath);
+            CurrentPath = null;
 
             TitleBox.Clear();
             ContentBox.Clear();
 
-            ChangesMade = true;
-
             LoadNotes();
-        }
-
-        private void ContentBox_TextChanged(object sender, EventArgs e)
-        {
-            ChangesMade = true;
-        }
-
-        private void TitleBox_TextChanged(object sender, EventArgs e)
-        {
-            ChangesMade = true;
         }
     }
 }
