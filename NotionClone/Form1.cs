@@ -33,6 +33,7 @@ namespace NotionClone
         string DataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Notion Clone");
         string CurrentPath;
         bool Saving = false;
+        bool TitleBoxIsPlaceholder = false;
 
         Timer mouseCheckTimer;
         bool isInside = false;
@@ -43,6 +44,9 @@ namespace NotionClone
             InitializeComponent();
             TopPanel.MouseDown += TopPanel_MouseDown;
             ThemeAllControls();
+
+            TitleBox.TextChanged += TitleBox_TextChanged;
+            TitleBox.Enter += TitleBox_Enter;
 
             mouseCheckTimer = new Timer();
             mouseCheckTimer.Interval = 20;
@@ -133,7 +137,7 @@ namespace NotionClone
                     string Json = File.ReadAllText(file);
                     var note = JsonSerializer.Deserialize<Dictionary<string, string>>(Json);
 
-                    if (note.ContainsKey("title"))
+                    if (note != null && note.ContainsKey("title"))
                     {
                         NoteSidebarElement NSE = new NoteSidebarElement(note["title"], file);
                         NSE.FileDoubleClicked += SidebarNoteClicked;
@@ -151,7 +155,7 @@ namespace NotionClone
 
         private void SidebarNoteClicked(object sender, string directory)
         {
-            if (!string.IsNullOrEmpty(CurrentPath))
+            if (!string.IsNullOrEmpty(CurrentPath) && !TitleBoxIsPlaceholder)
             {
                 SaveNote(TitleBox.Text, ContentBox.Text, CurrentPath);
             }
@@ -164,6 +168,11 @@ namespace NotionClone
         private void SaveNote(string title, string content, string path)
         {
             if (Saving) return;
+
+            bool isNewNoteCreation = title == "New Note" && string.IsNullOrEmpty(content);
+
+            if (!isNewNoteCreation && string.IsNullOrWhiteSpace(title)) return;
+
             Saving = true;
 
             try
@@ -176,12 +185,12 @@ namespace NotionClone
                 var Note = new
                 {
                     title = title,
-                    content = content
+                    content = content ?? ""
                 };
 
                 string FilePath;
 
-                if (!string.IsNullOrEmpty(path) && File.Exists(path))
+                if (!string.IsNullOrEmpty(path) && (File.Exists(path) || path == CurrentPath))
                 {
                     FilePath = path;
                 }
@@ -226,6 +235,8 @@ namespace NotionClone
                     TitleBox.Text = note["title"];
                     ContentBox.Text = note["content"];
                     CurrentPath = path;
+                    TitleBoxIsPlaceholder = false;
+                    TitleBox.ForeColor = Color.FromArgb(212, 212, 212);
                 }
             }
 
@@ -235,6 +246,7 @@ namespace NotionClone
                 TitleBox.Clear();
                 ContentBox.Clear();
                 CurrentPath = null;
+                TitleBoxIsPlaceholder = false;
             }
         }
 
@@ -259,7 +271,7 @@ namespace NotionClone
 
         private void ButtonClose_Click(object sender, EventArgs e)
         {
-            if (!string.IsNullOrEmpty(CurrentPath))
+            if (!string.IsNullOrEmpty(CurrentPath) && !TitleBoxIsPlaceholder && !string.IsNullOrWhiteSpace(TitleBox.Text))
             {
                 SaveNote(TitleBox.Text, ContentBox.Text, CurrentPath);
             }
@@ -270,16 +282,25 @@ namespace NotionClone
         {
             if (!string.IsNullOrEmpty(CurrentPath) && !Saving)
             {
-                SaveNote(TitleBox.Text, ContentBox.Text, CurrentPath);
-                LoadNotes();
+                if (!(TitleBoxIsPlaceholder && TitleBox.Text == "New Note"))
+                {
+                    SaveNote(TitleBox.Text, ContentBox.Text, CurrentPath);
+                    LoadNotes();
+                }
             }
         }
 
         private void ButtonNewNote_Click(object sender, EventArgs e)
         {
+            if (!string.IsNullOrEmpty(CurrentPath) && !TitleBoxIsPlaceholder && !string.IsNullOrWhiteSpace(TitleBox.Text))
+            {
+                SaveNote(TitleBox.Text, ContentBox.Text, CurrentPath);
+            }
+
             TitleBox.Text = "New Note";
             ContentBox.Clear();
             TitleBox.ForeColor = Color.FromArgb(155, 155, 155);
+            TitleBoxIsPlaceholder = true;
 
             int fileNumber = 1;
             string newNotePath;
@@ -292,13 +313,37 @@ namespace NotionClone
 
             CurrentPath = newNotePath;
 
-            SaveNote(TitleBox.Text, ContentBox.Text, CurrentPath);
+            SaveNote("New Note", "", CurrentPath);
+            LoadNotes();
         }
 
         private void TitleBox_Click_1(object sender, EventArgs e)
         {
-            TitleBox.Clear();
-            TitleBox.ForeColor = Color.FromArgb(212, 212, 212);
+            if (TitleBoxIsPlaceholder)
+            {
+                TitleBox.Clear();
+                TitleBox.ForeColor = Color.FromArgb(212, 212, 212);
+                TitleBoxIsPlaceholder = false;
+            }
+        }
+
+        private void TitleBox_TextChanged(object sender, EventArgs e)
+        {
+            if (TitleBoxIsPlaceholder && TitleBox.Text != "New Note")
+            {
+                TitleBoxIsPlaceholder = false;
+                TitleBox.ForeColor = Color.FromArgb(212, 212, 212);
+            }
+        }
+
+        private void TitleBox_Enter(object sender, EventArgs e)
+        {
+            if (TitleBoxIsPlaceholder)
+            {
+                TitleBox.Clear();
+                TitleBox.ForeColor = Color.FromArgb(212, 212, 212);
+                TitleBoxIsPlaceholder = false;
+            }
         }
 
         private void MoreButton_Click(object sender, EventArgs e)
@@ -311,15 +356,33 @@ namespace NotionClone
         {
             if (!string.IsNullOrEmpty(CurrentPath) && File.Exists(CurrentPath))
             {
-                File.Delete(CurrentPath);
+                try
+                {
+                    File.Delete(CurrentPath);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error deleting note: {ex.Message}");
+                    return;
+                }
             }
 
             CurrentPath = null;
-
             TitleBox.Clear();
             ContentBox.Clear();
+            TitleBoxIsPlaceholder = false;
 
             LoadNotes();
+
+            var files = Directory.GetFiles(DataPath, "*.json");
+            if (files.Length > 0)
+            {
+                CurrentPath = files[0];
+                LoadNote(CurrentPath);
+            }
+
+            panel1.Visible = false;
+            TrashButton.Visible = false;
         }
     }
 }
