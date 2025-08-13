@@ -34,6 +34,7 @@ namespace NotionClone
         string CurrentPath;
         bool Saving = false;
         bool TitleBoxIsPlaceholder = false;
+        string bulletString = "  •  ";
 
         Timer mouseCheckTimer;
         bool isInside = false;
@@ -47,6 +48,8 @@ namespace NotionClone
 
             TitleBox.TextChanged += TitleBox_TextChanged;
             TitleBox.Enter += TitleBox_Enter;
+
+            ContentBox.KeyDown += ContentBox_KeyDown;
 
             mouseCheckTimer = new Timer();
             mouseCheckTimer.Interval = 20;
@@ -383,6 +386,43 @@ namespace NotionClone
 
             panel1.Visible = false;
             TrashButton.Visible = false;
+        }
+
+
+
+        private void ContentBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Space)
+            {
+                int cursorPos = ContentBox.SelectionStart;
+
+                if (cursorPos >= 2)
+                {
+                    string textBefore = ContentBox.Text.Substring(0, cursorPos);
+                    if (textBefore.EndsWith("--"))
+                    {
+                        ContentBox.Text =
+                            textBefore.Substring(0, textBefore.Length - 2) +
+                            bulletString +
+                            ContentBox.Text.Substring(cursorPos);
+
+                        ContentBox.SelectionStart = (cursorPos - 2) + bulletString.Length;
+                        e.SuppressKeyPress = true;
+                    }
+                }
+            }
+
+            if (e.KeyCode == Keys.Enter)
+            {
+                int lineIndex = ContentBox.GetLineFromCharIndex(ContentBox.SelectionStart);
+                string currentLine = ContentBox.Lines[lineIndex];
+
+                if (currentLine.TrimStart().StartsWith(bulletString.TrimStart()))
+                {
+                    e.SuppressKeyPress = true;
+                    ContentBox.SelectedText = "\n" + bulletString;
+                }
+            }
         }
     }
 }
