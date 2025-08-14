@@ -50,6 +50,7 @@ namespace NotionClone
             TitleBox.Enter += TitleBox_Enter;
 
             ContentBox.KeyDown += ContentBox_KeyDown;
+            ContentBox.MouseDown += ContentBox_MouseDown;
 
             mouseCheckTimer = new Timer();
             mouseCheckTimer.Interval = 20;
@@ -392,23 +393,29 @@ namespace NotionClone
 
         private void ContentBox_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Space)
+            int cursorPos = ContentBox.SelectionStart;
+
+            if (e.KeyCode == Keys.Space && cursorPos >= 2)
             {
-                int cursorPos = ContentBox.SelectionStart;
+                string textBefore = ContentBox.Text.Substring(0, cursorPos);
 
-                if (cursorPos >= 2)
+                if (textBefore.EndsWith("--"))
                 {
-                    string textBefore = ContentBox.Text.Substring(0, cursorPos);
-                    if (textBefore.EndsWith("--"))
-                    {
-                        ContentBox.Text =
-                            textBefore.Substring(0, textBefore.Length - 2) +
-                            bulletString +
-                            ContentBox.Text.Substring(cursorPos);
+                    ContentBox.Text =
+                        textBefore.Substring(0, textBefore.Length - 2) +
+                        bulletString +
+                        ContentBox.Text.Substring(cursorPos);
+                    ContentBox.SelectionStart = (cursorPos - 2) + bulletString.Length;
+                    e.SuppressKeyPress = true;
+                    return;
+                }
 
-                        ContentBox.SelectionStart = (cursorPos - 2) + bulletString.Length;
-                        e.SuppressKeyPress = true;
-                    }
+                if (textBefore.EndsWith("[]"))
+                {
+                    ContentBox.Text = textBefore.Substring(0, textBefore.Length - 2) + "☐ " + ContentBox.Text.Substring(cursorPos);
+                    ContentBox.SelectionStart = (cursorPos - 2) + 2;
+                    e.SuppressKeyPress = true;
+                    return;
                 }
             }
 
@@ -421,6 +428,54 @@ namespace NotionClone
                 {
                     e.SuppressKeyPress = true;
                     ContentBox.SelectedText = "\n" + bulletString;
+                    return;
+                }
+
+                if (currentLine.TrimStart().StartsWith("☐ "))
+                {
+                    e.SuppressKeyPress = true;
+                    ContentBox.SelectedText = "\n☐ ";
+                    return;
+                }
+
+                if (currentLine.Trim() == "---")
+                {
+                    e.SuppressKeyPress = true;
+
+                    string divider = new string('─', 50);
+                    int startIndex = ContentBox.GetFirstCharIndexFromLine(lineIndex);
+                    int lineLength = currentLine.Length;
+
+                    ContentBox.Select(startIndex, lineLength);
+                    ContentBox.SelectedText = divider + "\n";
+                    return;
+                }
+            }
+        }
+
+        private void ContentBox_MouseDown(object sender, MouseEventArgs e)
+        {
+            int index = ContentBox.GetCharIndexFromPosition(e.Location);
+
+            if (index < 0 || index >= ContentBox.Text.Length) return;
+
+            int lineIndex = ContentBox.GetLineFromCharIndex(index);
+            int lineStart = ContentBox.GetFirstCharIndexFromLine(lineIndex);
+
+            string lineText = ContentBox.Lines[lineIndex];
+
+            if (lineText.StartsWith("☐ ") || lineText.StartsWith("☑ "))
+            {
+                int relativePos = index - lineStart;
+
+                if (relativePos <= 1)
+                {
+                    string newLineText = (lineText.StartsWith("☐ ") ? "☑ " : "☐ ") + lineText.Substring(2);
+                    var lines = new List<string>(ContentBox.Lines);
+                    lines[lineIndex] = newLineText;
+                    ContentBox.Lines = lines.ToArray();
+
+                    ContentBox.SelectionStart = index;
                 }
             }
         }
