@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Speech.Recognition;
 using System.Text.Json;
 using System.Windows.Forms;
+using Vosk;
+using NAudio.Wave;
 
 namespace NotionClone
 {
@@ -13,16 +16,10 @@ namespace NotionClone
         public const int WM_NCLBUTTONDOWN = 0xA1;
         public const int HT_CAPTION = 0x2;
 
-        [DllImport("user32.dll")]
-        public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
-        [DllImport("user32.dll")]
-        public static extern bool ReleaseCapture();
+        [DllImport("user32.dll")] public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+        [DllImport("user32.dll")] public static extern bool ReleaseCapture();
 
-        enum DwmWindowAttribute : uint
-        {
-            DWMWA_USE_IMMERSIVE_DARK_MODE = 20,
-            DWMWA_MICA_EFFECT = 38,
-        }
+        enum DwmWindowAttribute : uint { DWMWA_USE_IMMERSIVE_DARK_MODE = 20, DWMWA_MICA_EFFECT = 38, }
 
         [DllImport("uxtheme.dll", CharSet = CharSet.Unicode)]
         static extern int SetWindowTheme(IntPtr hWnd, string pszSubAppName, string pszSubIdList);
@@ -36,6 +33,9 @@ namespace NotionClone
         bool TitleBoxIsPlaceholder = false;
         string bulletString = "  •  ";
 
+        SpeechRecognitionEngine recognizer;
+        bool isListening = false;
+
         Timer mouseCheckTimer;
         bool isInside = false;
         DateTime lastInsideTime;
@@ -43,6 +43,8 @@ namespace NotionClone
         public Form1()
         {
             InitializeComponent();
+            SetupSpeech();
+
             TopPanel.MouseDown += TopPanel_MouseDown;
             ThemeAllControls();
 
@@ -354,6 +356,7 @@ namespace NotionClone
         {
             panel1.Visible = !panel1.Visible;
             TrashButton.Visible = panel1.Visible;
+            MicrophoneButton.Visible = panel1.Visible;
         }
 
         private void TrashButton_Click(object sender, EventArgs e)
@@ -477,6 +480,44 @@ namespace NotionClone
 
                     ContentBox.SelectionStart = index;
                 }
+            }
+        }
+
+        //learn.microsoft.com/en-us/dotnet/api/system.speech.recognition.speechrecognitionengine?view=net-9.0-pp
+        //stackoverflow.com/questions/5467827/good-speech-recognition-api
+        private void SetupSpeech()
+        {
+            recognizer = new SpeechRecognitionEngine();
+            recognizer.SetInputToDefaultAudioDevice();
+
+            recognizer.SpeechRecognized += (s, e) =>
+            {
+                ContentBox.Invoke((MethodInvoker)(() =>
+                {
+                    ContentBox.AppendText(e.Result.Text + " ");
+                }));
+            };
+        }
+
+        private void MicrophoneButton_Click(object sender, EventArgs e)
+        {
+            if (!isListening)
+            {
+                recognizer.LoadGrammar(new DictationGrammar());
+                recognizer.RecognizeAsync(RecognizeMode.Multiple);
+                isListening = true;
+
+                ContentBox.ReadOnly = true;
+                MicrophoneButton.IconChar = FontAwesome.Sharp.IconChar.Pause;
+            }
+
+            else
+            {
+                recognizer.RecognizeAsyncStop();
+                isListening = false;
+
+                ContentBox.ReadOnly = false;
+                MicrophoneButton.IconChar = FontAwesome.Sharp.IconChar.MicrophoneAlt;
             }
         }
     }

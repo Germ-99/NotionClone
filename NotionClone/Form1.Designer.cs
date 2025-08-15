@@ -45,6 +45,7 @@
             this.ButtonMax = new FontAwesome.Sharp.IconPictureBox();
             this.ButtonClose = new FontAwesome.Sharp.IconPictureBox();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
+            this.MicrophoneButton = new FontAwesome.Sharp.IconPictureBox();
             this.SidePanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.ButtonNewNote)).BeginInit();
             this.TopPanel.SuspendLayout();
@@ -53,6 +54,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.ButtonMin)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ButtonMax)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ButtonClose)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.MicrophoneButton)).BeginInit();
             this.SuspendLayout();
             // 
             // SidePanel
@@ -141,6 +143,7 @@
             // 
             // TopPanel
             // 
+            this.TopPanel.Controls.Add(this.MicrophoneButton);
             this.TopPanel.Controls.Add(this.panel1);
             this.TopPanel.Controls.Add(this.TrashButton);
             this.TopPanel.Controls.Add(this.MoreButton);
@@ -249,6 +252,22 @@
             this.timer1.Interval = 5000;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
+            // MicrophoneButton
+            // 
+            this.MicrophoneButton.BackColor = System.Drawing.Color.Transparent;
+            this.MicrophoneButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(155)))), ((int)(((byte)(155)))), ((int)(((byte)(155)))));
+            this.MicrophoneButton.IconChar = FontAwesome.Sharp.IconChar.MicrophoneAlt;
+            this.MicrophoneButton.IconColor = System.Drawing.Color.FromArgb(((int)(((byte)(155)))), ((int)(((byte)(155)))), ((int)(((byte)(155)))));
+            this.MicrophoneButton.IconFont = FontAwesome.Sharp.IconFont.Auto;
+            this.MicrophoneButton.IconSize = 27;
+            this.MicrophoneButton.Location = new System.Drawing.Point(68, 5);
+            this.MicrophoneButton.Name = "MicrophoneButton";
+            this.MicrophoneButton.Size = new System.Drawing.Size(27, 27);
+            this.MicrophoneButton.TabIndex = 21;
+            this.MicrophoneButton.TabStop = false;
+            this.MicrophoneButton.Visible = false;
+            this.MicrophoneButton.Click += new System.EventHandler(this.MicrophoneButton_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -276,6 +295,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.ButtonMin)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.ButtonMax)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.ButtonClose)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.MicrophoneButton)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -297,6 +317,7 @@
         private FontAwesome.Sharp.IconPictureBox MoreButton;
         private System.Windows.Forms.Panel panel1;
         private FontAwesome.Sharp.IconPictureBox TrashButton;
+        private FontAwesome.Sharp.IconPictureBox MicrophoneButton;
     }
 }
 
